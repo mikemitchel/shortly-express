@@ -10,8 +10,8 @@ var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
-var Session = require('./app/models/session');
 var Sessions = require('./app/collections/sessions');
+var Session = require('./app/models/session');
 var uuid = require('uuid');
 
 var app = express();
@@ -101,12 +101,14 @@ app.post('/login', function (req, res) {
     if ( username === found.attributes.username && password === found.attributes.password ) {
       console.log("you're logged in")
       //create new session
-      var newSession = new Session ({
+      var session = new Session ({
         id: uuid(),
         user_id: found.attributes.id
-      })
+      });
+      console.log(session);
 
-      newSession.save().then(function(newSession) {
+      session.save(null, {method: 'insert'}).then(function(newSession) {
+        console.log(".save ", newSession)
         Sessions.add(newSession);
         res.send(200, newSession);
       })
