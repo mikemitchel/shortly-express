@@ -41,6 +41,32 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
   }
 });
 
+db.knex.schema.hasTable('users').then(function(exists) {
+  if (!exists) {
+    db.knex.schema.createTable('users', function (user) {
+      user.increments('id').primary();
+      user.string('username', 20);
+      user.string('password', 20);
+      user.timestamps();
+    }).then(function (table) {
+      console.log('Created Table', table);
+    });
+  }
+});
+
+//many to many relationship between links and users - make this work
+// db.knex.schema.hasTable('user_urls').then(function(exists) {
+//   if (!exists) {
+//     db.knex.schema.createTable('users', function (click) {
+//       user.increments('id').primary();
+//       user.string('username', 20);
+//       user.string('password', 20);
+//       user.timestamps();
+//     }).then(function (table) {
+//       console.log('Created Table', table);
+//     });
+//   }
+// });
 /************************************************************/
 // Add additional schema definitions below
 /************************************************************/
