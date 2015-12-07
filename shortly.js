@@ -110,7 +110,7 @@ app.post('/login', function (req, res) {
       session.save(null, {method: 'insert'}).then(function(newSession) {
         console.log(".save ", newSession)
         Sessions.add(newSession);
-        res.send(200, newSession);
+        res.send(200, {id: newSession.attributes.id});
       })
       //add to session table
 
