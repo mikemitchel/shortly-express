@@ -23,24 +23,25 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', 
+app.get('/',
+function(req, res) {
+  // if (not logged in) app.get/login
+  res.render('index');
+});
+
+app.get('/create',
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
-function(req, res) {
-  res.render('index');
-});
-
-app.get('/links', 
+app.get('/links',
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
@@ -78,7 +79,55 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.get('/login',
+function(req, res) {
+  // if (not logged in) app.get/login
+  res.render('login');
+});
 
+app.get('/signup',
+function(req, res) {
+  // if (not logged in) app.get/login
+  res.render('signup');
+});
+
+app.post('/login', function (req, res) {
+  console.log(req.body);
+  var username = req.body.username;
+  new User({ username: username }).fetch().then(function(found) {
+    if (found) {
+      console.log('found this user!')
+      // res.send(200, found.attributes);
+
+    } else {
+      console.log('not found , woe')
+    }
+    //   util.getUrlTitle(uri, function(err, title) {
+    //     if (err) {
+    //       console.log('Error reading URL heading: ', err);
+    //       return res.send(404);
+    //     }
+
+    //     var link = new Link({
+    //       url: uri,
+    //       title: title,
+    //       base_url: req.headers.origin
+    //     });
+
+    //     link.save().then(function(newLink) {
+    //       Links.add(newLink);
+    //       res.send(200, newLink);
+    //     });
+    //   });
+    // }
+  });
+});
+
+
+
+// app.post('/login') {
+
+// }
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
