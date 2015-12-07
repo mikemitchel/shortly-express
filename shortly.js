@@ -10,6 +10,9 @@ var User = require('./app/models/user');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
+var Session = require('./app/models/session');
+var Sessions = require('./app/collections/sessions');
+var uuid = require('uuid');
 
 var app = express();
 
@@ -92,42 +95,53 @@ function(req, res) {
 });
 
 app.post('/login', function (req, res) {
-  console.log(req.body);
   var username = req.body.username;
+  var password = req.body.password;
   new User({ username: username }).fetch().then(function(found) {
-    if (found) {
-      console.log('found this user!')
-      // res.send(200, found.attributes);
+    if ( username === found.attributes.username && password === found.attributes.password ) {
+      console.log("you're logged in")
+      //create new session
+      var newSession = new Session ({
+        id: uuid(),
+        user_id: found.attributes.id
+      })
+
+      newSession.save().then(function(newSession) {
+        Sessions.add(newSession);
+        res.send(200, newSession);
+      })
+      //add to session table
 
     } else {
-      console.log('not found , woe')
+      res.status(400).send({ reason: 'Incorrect username or password' });
     }
-    //   util.getUrlTitle(uri, function(err, title) {
-    //     if (err) {
-    //       console.log('Error reading URL heading: ', err);
-    //       return res.send(404);
-    //     }
 
-    //     var link = new Link({
-    //       url: uri,
-    //       title: title,
-    //       base_url: req.headers.origin
-    //     });
-
-    //     link.save().then(function(newLink) {
-    //       Links.add(newLink);
-    //       res.send(200, newLink);
-    //     });
-    //   });
-    // }
   });
 });
 
 
 
-// app.post('/login') {
+app.post('/signup', function (req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
 
-// }
+  new User({ username: username}).fetch().then(function(found) {
+    if (found) {
+      console('already as user')
+    } else {
+
+      var user = new User({
+        username: username,
+        password: password
+      });
+
+      user.save().then(function(newUser) {
+        Users.add(newUser);
+        res.send(200);
+      });
+    }
+  });
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail

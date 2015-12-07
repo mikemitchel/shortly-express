@@ -7,4 +7,6 @@ var User = db.Model.extend({
   hasTimestamps: true
 });
 
+// initialize with hashed password here?
+
 module.exports = User;
