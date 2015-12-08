@@ -29,6 +29,7 @@ app.use(express.static(__dirname + '/public'));
 app.get('/',
 function(req, res) {
   // if (not logged in) app.get/login
+
   res.render('index');
 });
 
@@ -110,6 +111,7 @@ app.post('/login', function (req, res) {
       session.save(null, {method: 'insert'}).then(function(newSession) {
         console.log(".save ", newSession)
         Sessions.add(newSession);
+        res.redirect('/');
         res.send(200, {id: newSession.attributes.id});
       })
       //add to session table
