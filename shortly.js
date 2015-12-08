@@ -47,7 +47,7 @@ app.get('/create',
 function(req, res) {
   util.authenticate(req.cookies.sessionId, function(matched){
     if (matched) {
-      res.render('create');
+      res.render('index');
     } else {
       res.redirect('/login')
     }
@@ -55,45 +55,58 @@ function(req, res) {
   // res.render('index');
 });
 
-app.get('/links',
-function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
-  });
+app.get('/links', function(req, res) {
+  util.authenticate(req.cookies.sessionId, function(matched){
+    if (matched) {
+      Links.reset().fetch().then(function(links) {
+        res.send(200, links.models);
+      });
+      // res.render('create');
+    } else {
+      res.redirect('/login')
+    }
+  })
 });
 
 app.post('/links',
 function(req, res) {
+  util.authenticate(req.cookies.sessionId, function(matched){
+    if (matched) {
+      if (!util.isValidUrl(uri)) {
+        console.log('Not a valid url: ', uri);
+        return res.send(404);
+      }
+
+      new Link({ url: uri }).fetch().then(function(found) {
+        if (found) {
+          res.send(200, found.attributes);
+        } else {
+          util.getUrlTitle(uri, function(err, title) {
+            if (err) {
+              console.log('Error reading URL heading: ', err);
+              return res.send(404);
+            }
+
+            var link = new Link({
+              url: uri,
+              title: title,
+              base_url: req.headers.origin
+            });
+
+            link.save().then(function(newLink) {
+              Links.add(newLink);
+              res.send(200, newLink);
+            });
+          });
+        }
+      });
+      // res.render('create');
+    } else {
+      res.redirect('/login')
+    }
+  })
   var uri = req.body.url;
 
-  if (!util.isValidUrl(uri)) {
-    console.log('Not a valid url: ', uri);
-    return res.send(404);
-  }
-
-  new Link({ url: uri }).fetch().then(function(found) {
-    if (found) {
-      res.send(200, found.attributes);
-    } else {
-      util.getUrlTitle(uri, function(err, title) {
-        if (err) {
-          console.log('Error reading URL heading: ', err);
-          return res.send(404);
-        }
-
-        var link = new Link({
-          url: uri,
-          title: title,
-          base_url: req.headers.origin
-        });
-
-        link.save().then(function(newLink) {
-          Links.add(newLink);
-          res.send(200, newLink);
-        });
-      });
-    }
-  });
 });
 
 /************************************************************/
@@ -102,7 +115,21 @@ function(req, res) {
 
 app.get('/login',
 function(req, res) {
-  // if (not logged in) app.get/login
+  if(req.cookies.sessionId) {
+    console.log('session cookie', req.cookies.sessionId)
+    new Session({id: req.cookies.sessionId}).fetch().then(function(found){
+      if (found !== null) {
+        console.log('found', found.attributes.id);
+        db.knex('sessions')
+          .where('id', '=', found.attributes.id)
+          .del()
+          .catch(function(error) {
+      });
+        // console.log(query.toString())
+
+      }
+    });
+  }
   res.render('login');
 });
 
@@ -116,8 +143,10 @@ app.post('/login', function (req, res) {
   var username = req.body.username;
   var password = req.body.password;
   new User({ username: username }).fetch().then(function(found) {
-    if ( username === found.attributes.username && password === found.attributes.password ) {
-      console.log("you're logged in")
+    if (found === null) {
+      res.redirect('/login');
+    } else if ( username === found.attributes.username && password === found.attributes.password ) {
+
       var session = new Session ({
         id: uuid(),
         user_id: found.attributes.id
@@ -129,8 +158,6 @@ app.post('/login', function (req, res) {
         res.redirect('/');
       })
 
-    } else {
-      res.status(400).send({ reason: 'Incorrect username or password' });
     }
 
   });
@@ -154,9 +181,10 @@ app.post('/signup', function (req, res) {
 
       user.save().then(function(newUser) {
         Users.add(newUser);
-        res.redirect('/');
+        return res;
+
       })
-      .then(function() {
+      .then(function(res) {
         new User({ username: username }).fetch().then(function(found) {
           var session = new Session ({
           id: uuid(),
@@ -164,7 +192,6 @@ app.post('/signup', function (req, res) {
         });
 
         session.save(null, {method: 'insert'}).then(function(newSession) {
-          console.log(".save ", newSession)
           Sessions.add(newSession);
           res.cookie('sessionId', newSession.attributes.id);
           res.redirect('/');
