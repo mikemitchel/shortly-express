@@ -139,8 +139,22 @@ app.post('/signup', function (req, res) {
 
       user.save().then(function(newUser) {
         Users.add(newUser);
-        res.send(200);
-      });
+        res.redirect('/');
+      })
+      .then(function() {
+        new User({ username: username }).fetch().then(function(found) {
+          var session = new Session ({
+          id: uuid(),
+          user_id: found.attributes.id
+        });
+
+        session.save(null, {method: 'insert'}).then(function(newSession) {
+          console.log(".save ", newSession)
+          Sessions.add(newSession);
+        })
+
+      })
+      })
     }
   });
 });

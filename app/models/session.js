@@ -5,9 +5,9 @@ var User = require('./user');
 
 var Session = db.Model.extend({
   tableName: 'sessions',
-  user_id: function () {
-    return this.belongsTo(User);
-  },
+  // user_id: function () {
+  //   return this.belongsTo(User);
+  // },
   hasTimestamps: true
 });
 
