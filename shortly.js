@@ -2,6 +2,9 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var session = require("express-session")
+var cookieParser = require('cookie-parser');
+
 
 
 var db = require('./app/config');
@@ -21,6 +24,8 @@ app.set('view engine', 'ejs');
 app.use(partials());
 // Parse JSON (uniform resource locators)
 app.use(bodyParser.json());
+app.use(cookieParser());
+
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
@@ -28,7 +33,7 @@ app.use(express.static(__dirname + '/public'));
 
 app.get('/',
 function(req, res) {
-  // if (not logged in) app.get/login
+  console.log(req.cookies.sessionId);
 
   res.render('index');
 });
@@ -106,13 +111,15 @@ app.post('/login', function (req, res) {
         id: uuid(),
         user_id: found.attributes.id
       });
-      console.log(session);
+      // console.log(session);
 
       session.save(null, {method: 'insert'}).then(function(newSession) {
-        console.log(".save ", newSession)
+        // console.log(".save ", newSession)
         Sessions.add(newSession);
+        res.cookie('sessionId', newSession.attributes.id);
+        // console.log(res.cookie())
+        // res.send(200);
         res.redirect('/');
-        res.send(200, {id: newSession.attributes.id});
       })
       //add to session table
 
@@ -153,6 +160,8 @@ app.post('/signup', function (req, res) {
         session.save(null, {method: 'insert'}).then(function(newSession) {
           console.log(".save ", newSession)
           Sessions.add(newSession);
+          res.redirect('/');
+          res.send(200, {id: newSession.attributes.id});
         })
 
       })
