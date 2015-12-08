@@ -31,16 +31,28 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
+
 app.get('/',
 function(req, res) {
-  console.log(req.cookies.sessionId);
-
-  res.render('index');
+  util.authenticate(req.cookies.sessionId, function(matched){
+    if (matched) {
+      res.render('index');
+    } else {
+      res.redirect('/login')
+    }
+  })
 });
 
 app.get('/create',
 function(req, res) {
-  res.render('index');
+  util.authenticate(req.cookies.sessionId, function(matched){
+    if (matched) {
+      res.render('create');
+    } else {
+      res.redirect('/login')
+    }
+  })
+  // res.render('index');
 });
 
 app.get('/links',
@@ -106,22 +118,16 @@ app.post('/login', function (req, res) {
   new User({ username: username }).fetch().then(function(found) {
     if ( username === found.attributes.username && password === found.attributes.password ) {
       console.log("you're logged in")
-      //create new session
       var session = new Session ({
         id: uuid(),
         user_id: found.attributes.id
       });
-      // console.log(session);
 
       session.save(null, {method: 'insert'}).then(function(newSession) {
-        // console.log(".save ", newSession)
         Sessions.add(newSession);
         res.cookie('sessionId', newSession.attributes.id);
-        // console.log(res.cookie())
-        // res.send(200);
         res.redirect('/');
       })
-      //add to session table
 
     } else {
       res.status(400).send({ reason: 'Incorrect username or password' });
@@ -160,8 +166,8 @@ app.post('/signup', function (req, res) {
         session.save(null, {method: 'insert'}).then(function(newSession) {
           console.log(".save ", newSession)
           Sessions.add(newSession);
+          res.cookie('sessionId', newSession.attributes.id);
           res.redirect('/');
-          res.send(200, {id: newSession.attributes.id});
         })
 
       })
