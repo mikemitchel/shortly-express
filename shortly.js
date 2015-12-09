@@ -4,6 +4,7 @@ var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var session = require("express-session")
 var cookieParser = require('cookie-parser');
+var bcrypt = require('bcrypt');
 
 
 
@@ -145,7 +146,7 @@ app.post('/login', function (req, res) {
   new User({ username: username }).fetch().then(function(found) {
     if (found === null) {
       res.redirect('/login');
-    } else if ( username === found.attributes.username && password === found.attributes.password ) {
+    } else if ( username === found.attributes.username && bcrypt.compareSync(password, found.attributes.password )) {
 
       var session = new Session ({
         id: uuid(),
@@ -167,7 +168,7 @@ app.post('/login', function (req, res) {
 
 app.post('/signup', function (req, res) {
   var username = req.body.username;
-  var password = req.body.password;
+  var password = bcrypt.hashSync(req.body.password, 10);
 
   new User({ username: username}).fetch().then(function(found) {
     if (found) {
